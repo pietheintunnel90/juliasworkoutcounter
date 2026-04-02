@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Julia's Workout Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent-pull: #e8ff47;
+    --accent-push: #47d4ff;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4747;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 40px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.2rem, 8vw, 3.2rem);
+    letter-spacing: 3px;
+    color: var(--text);
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .counters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 520px;
+    margin-bottom: 24px;
+  }
+
+  .counter-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .counter-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+  }
+
+  .counter-card:first-child .counter-label { color: var(--accent-pull); }
+  .counter-card:last-child .counter-label { color: var(--accent-push); }
+
+  .counter-total {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 12vw, 5rem);
+    line-height: 1;
+    transition: transform 0.1s ease;
+  }
+
+  .counter-card:first-child .counter-total { color: var(--accent-pull); }
+  .counter-card:last-child .counter-total { color: var(--accent-push); }
+
+  .counter-total.bump {
+    transform: scale(1.15);
+  }
+
+  .add-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .add-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 10px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .counter-card:first-child .add-btn:hover {
+    background: var(--accent-pull);
+    border-color: var(--accent-pull);
+    color: #000;
+    transform: translateY(-1px);
+  }
+
+  .counter-card:last-child .add-btn:hover {
+    background: var(--accent-push);
+    border-color: var(--accent-push);
+    color: #000;
+    transform: translateY(-1px);
+  }
+
+  .add-btn:active { transform: scale(0.96); }
+
+  .reset-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .reset-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  /* Save Section */
+  .save-section {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .save-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .save-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .date-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .date-input:focus { border-color: #555; }
+
+  .save-btn {
+    background: var(--text);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 11px 22px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .save-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .save-btn:active { transform: scale(0.97); }
+
+  /* History */
+  .history-section {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .history-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+  }
+
+  .clear-history-btn {
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .clear-history-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  .history-empty {
+    color: var(--muted);
+    font-size: 0.88rem;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .history-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .history-entry:last-child { border-bottom: none; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .history-date {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+    min-width: 90px;
+  }
+
+  .history-stats {
+    display: flex;
+    gap: 16px;
+  }
+
+  .history-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .history-stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  .history-stat-val.pull { color: var(--accent-pull); }
+  .history-stat-val.push { color: var(--accent-push); }
+
+  .history-stat-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .history-delete {
+    background: none;
+    border: none;
+    color: #333;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.15s;
+  }
+
+  .history-delete:hover { color: var(--danger); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #fff;
+    color: #000;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 12px 24px;
+    border-radius: 30px;
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+    z-index: 999;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<h1>Julia's Workout</h1>
+<p class="subtitle">Klimmzüge &amp; Liegestütze Zähler</p>
+
+<div class="counters">
+  <!-- Pull Ups -->
+  <div class="counter-card">
+    <div class="counter-label">Klimmzüge</div>
+    <div class="counter-total" id="pull-total">0</div>
+    <div class="add-buttons">
+      <button class="add-btn" onclick="add('pull', 1)">+1</button>
+      <button class="add-btn" onclick="add('pull', 3)">+3</button>
+      <button class="add-btn" onclick="add('pull', 5)">+5</button>
+      <button class="add-btn" onclick="add('pull', 8)">+8</button>
+      <button class="add-btn" onclick="add('pull', 10)">+10</button>
+      <button class="add-btn" onclick="add('pull', 15)">+15</button>
+    </div>
+    <div class="reset-row">
+      <button class="reset-btn" onclick="reset('pull')">↺ Zurücksetzen</button>
+    </div>
+  </div>
+
+  <!-- Push Ups -->
+  <div class="counter-card">
+    <div class="counter-label">Liegestütze</div>
+    <div class="counter-total" id="push-total">0</div>
+    <div class="add-buttons">
+      <button class="add-btn" onclick="add('push', 1)">+1</button>
+      <button class="add-btn" onclick="add('push', 3)">+3</button>
+      <button class="add-btn" onclick="add('push', 5)">+5</button>
+      <button class="add-btn" onclick="add('push', 8)">+8</button>
+      <button class="add-btn" onclick="add('push', 10)">+10</button>
+      <button class="add-btn" onclick="add('push', 15)">+15</button>
+    </div>
+    <div class="reset-row">
+      <button class="reset-btn" onclick="reset('push')">↺ Zurücksetzen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save Section -->
+<div class="save-section">
+  <h2>Workout Speichern</h2>
+  <div class="save-row">
+    <input type="date" class="date-input" id="save-date">
+    <button class="save-btn" onclick="saveWorkout()">Speichern</button>
+  </div>
+</div>
+
+<!-- History -->
+<div class="history-section">
+  <div class="history-header">
+    <h2>Verlauf</h2>
+    <button class="clear-history-btn" onclick="clearHistory()">Alles löschen</button>
+  </div>
+  <div id="history-list">
+    <p class="history-empty">Noch keine Einträge gespeichert.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let counts = { pull: 0, push: 0 };
+
+  // Set today's date as default
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('save-date').value = today;
+
+  function add(type, amount) {
+    counts[type] += amount;
+    const el = document.getElementById(type + '-total');
+    el.textContent = counts[type];
+    el.classList.remove('bump');
+    void el.offsetWidth; // reflow
+    el.classList.add('bump');
+    setTimeout(() => el.classList.remove('bump'), 150);
+  }
+
+  function reset(type) {
+    counts[type] = 0;
+    document.getElementById(type + '-total').textContent = '0';
+    showToast(type === 'pull' ? 'Klimmzüge zurückgesetzt' : 'Liegestütze zurückgesetzt');
+  }
+
+  function saveWorkout() {
+    const date = document.getElementById('save-date').value;
+    if (!date) { showToast('Bitte Datum eingeben!'); return; }
+    if (counts.pull === 0 && counts.push === 0) { showToast('Noch nichts zu speichern!'); return; }
+
+    const history = getHistory();
+
+    // Format date for display
+    const [y, m, d] = date.split('-');
+    const displayDate = `${d}.${m}.${y}`;
+
+    // Check if entry for this date exists → update
+    const existing = history.findIndex(e => e.date === date);
+    if (existing >= 0) {
+      history[existing].pull += counts.pull;
+      history[existing].push += counts.push;
+    } else {
+      history.unshift({ date, displayDate, pull: counts.pull, push: counts.push });
+    }
+
+    localStorage.setItem('workout_history', JSON.stringify(history));
+    renderHistory();
+    showToast(`✓ Gespeichert für ${displayDate}`);
+    counts.pull = 0;
+    counts.push = 0;
+    document.getElementById('pull-total').textContent = '0';
+    document.getElementById('push-total').textContent = '0';
+  }
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem('workout_history')) || []; }
+    catch { return []; }
+  }
+
+  function renderHistory() {
+    const history = getHistory();
+    const container = document.getElementById('history-list');
+    if (history.length === 0) {
+      container.innerHTML = '<p class="history-empty">Noch keine Einträge gespeichert.</p>';
+      return;
+    }
+
+    // Sort by date descending
+    const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
+
+    container.innerHTML = sorted.map((e, i) => `
+      <div class="history-entry">
+        <span class="history-date">${e.displayDate}</span>
+        <div class="history-stats">
+          <div class="history-stat">
+            <span class="history-stat-val pull">${e.pull}</span>
+            <span class="history-stat-label">Klimmzüge</span>
+          </div>
+          <div class="history-stat">
+            <span class="history-stat-val push">${e.push}</span>
+            <span class="history-stat-label">Liegestütze</span>
+          </div>
+        </div>
+        <button class="history-delete" onclick="deleteEntry('${e.date}')" title="Eintrag löschen">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function deleteEntry(date) {
+    const history = getHistory().filter(e => e.date !== date);
+    localStorage.setItem('workout_history', JSON.stringify(history));
+    renderHistory();
+    showToast('Eintrag gelöscht');
+  }
+
+  function clearHistory() {
+    if (!confirm('Wirklich den gesamten Verlauf löschen?')) return;
+    localStorage.removeItem('workout_history');
+    renderHistory();
+    showToast('Verlauf gelöscht');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // Init
+  renderHistory();
+</script>
+</body>
+</html>
