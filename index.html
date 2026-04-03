@@ -12,6 +12,7 @@
     --border: #2a2a2a;
     --accent-pull: #e8ff47;
     --accent-push: #47d4ff;
+    --accent-timer: #ff9f47;
     --text: #f0f0f0;
     --muted: #666;
     --danger: #ff4747;
@@ -30,24 +31,127 @@
     padding: 24px 16px 40px;
   }
 
+  .header-row {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+
+  .header-titles { flex: 1; }
+
   h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(2.2rem, 8vw, 3.2rem);
     letter-spacing: 3px;
     color: var(--text);
-    margin-bottom: 4px;
-    text-align: center;
+    line-height: 1;
   }
 
   .subtitle {
     color: var(--muted);
     font-size: 0.85rem;
-    text-align: center;
-    margin-bottom: 32px;
     letter-spacing: 1px;
     text-transform: uppercase;
+    text-align: center;
+    width: 100%;
+    max-width: 520px;
+    padding: 14px 0;
+    margin-bottom: 16px;
   }
 
+  /* TIMER WIDGET */
+  .timer-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 115px;
+    transition: border-color 0.3s;
+  }
+
+  .timer-widget.running { border-color: var(--accent-timer); }
+  .timer-widget.done { border-color: var(--danger); }
+
+  .timer-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  .timer-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    line-height: 1;
+    color: var(--accent-timer);
+    transition: color 0.3s;
+    letter-spacing: 1px;
+  }
+
+  .timer-widget.done .timer-display { color: var(--danger); }
+
+  .timer-input-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .timer-seconds-input {
+    width: 50px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 5px 6px;
+    outline: none;
+    text-align: center;
+  }
+
+  .timer-seconds-input:focus { border-color: var(--accent-timer); }
+
+  .timer-btn {
+    flex: 1;
+    background: var(--accent-timer);
+    color: #000;
+    border: none;
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 6px 4px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .timer-btn:hover { opacity: 0.85; }
+
+  .timer-btn.stop-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: var(--muted);
+  }
+
+  .timer-btn.stop-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,71,71,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(255,71,71,0); }
+  }
+  .timer-widget.done { animation: pulse-ring 0.8s ease 3; }
+
+  /* COUNTERS */
   .counters {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -70,8 +174,10 @@
 
   .counter-label {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     letter-spacing: 2px;
+    text-align: center;
+    line-height: 1.2;
   }
 
   .counter-card:first-child .counter-label { color: var(--accent-pull); }
@@ -87,9 +193,7 @@
   .counter-card:first-child .counter-total { color: var(--accent-pull); }
   .counter-card:last-child .counter-total { color: var(--accent-push); }
 
-  .counter-total.bump {
-    transform: scale(1.15);
-  }
+  .counter-total.bump { transform: scale(1.15); }
 
   .add-buttons {
     display: grid;
@@ -109,8 +213,6 @@
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.15s ease;
-    position: relative;
-    overflow: hidden;
   }
 
   .counter-card:first-child .add-btn:hover {
@@ -129,11 +231,7 @@
 
   .add-btn:active { transform: scale(0.96); }
 
-  .reset-row {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-  }
+  .reset-row { display: flex; gap: 8px; width: 100%; }
 
   .reset-btn {
     flex: 1;
@@ -151,12 +249,9 @@
     transition: all 0.15s;
   }
 
-  .reset-btn:hover {
-    border-color: var(--danger);
-    color: var(--danger);
-  }
+  .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
 
-  /* Save Section */
+  /* SAVE */
   .save-section {
     width: 100%;
     max-width: 520px;
@@ -172,14 +267,9 @@
     font-size: 1.3rem;
     letter-spacing: 2px;
     margin-bottom: 16px;
-    color: var(--text);
   }
 
-  .save-row {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
+  .save-row { display: flex; gap: 10px; align-items: center; }
 
   .date-input {
     flex: 1;
@@ -213,7 +303,7 @@
   .save-btn:hover { opacity: 0.85; transform: translateY(-1px); }
   .save-btn:active { transform: scale(0.97); }
 
-  /* History */
+  /* HISTORY */
   .history-section {
     width: 100%;
     max-width: 520px;
@@ -283,10 +373,7 @@
     min-width: 90px;
   }
 
-  .history-stats {
-    display: flex;
-    gap: 16px;
-  }
+  .history-stats { display: flex; gap: 16px; }
 
   .history-stat {
     display: flex;
@@ -324,7 +411,7 @@
 
   .history-delete:hover { color: var(--danger); }
 
-  /* Toast */
+  /* TOAST */
   .toast {
     position: fixed;
     bottom: 24px;
@@ -342,18 +429,31 @@
     white-space: nowrap;
   }
 
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<h1>Julia's Workout</h1>
-<p class="subtitle">Klimmzüge &amp; Liegestütze Zähler</p>
+<div class="header-row">
+  <div class="header-titles">
+    <h1>Julia's Workout</h1>
+  </div>
+
+  <!-- TIMER WIDGET oben rechts -->
+  <div class="timer-widget" id="timer-widget">
+    <div class="timer-label">Satzpause</div>
+    <div class="timer-display" id="timer-display">—</div>
+    <div class="timer-input-row">
+      <input type="number" class="timer-seconds-input" id="timer-input"
+             min="1" max="180" value="60">
+      <button class="timer-btn" id="timer-start-btn" onclick="startTimer()">▶ Start</button>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle">Klimmzüge &amp; Liegestütze/Dips Zähler</p>
 
 <div class="counters">
-  <!-- Pull Ups -->
   <div class="counter-card">
     <div class="counter-label">Klimmzüge</div>
     <div class="counter-total" id="pull-total">0</div>
@@ -370,9 +470,8 @@
     </div>
   </div>
 
-  <!-- Push Ups -->
   <div class="counter-card">
-    <div class="counter-label">Liegestütze</div>
+    <div class="counter-label">Liegestütze/<br>Dips</div>
     <div class="counter-total" id="push-total">0</div>
     <div class="add-buttons">
       <button class="add-btn" onclick="add('push', 1)">+1</button>
@@ -388,7 +487,6 @@
   </div>
 </div>
 
-<!-- Save Section -->
 <div class="save-section">
   <h2>Workout Speichern</h2>
   <div class="save-row">
@@ -397,7 +495,6 @@
   </div>
 </div>
 
-<!-- History -->
 <div class="history-section">
   <div class="history-header">
     <h2>Verlauf</h2>
@@ -411,18 +508,118 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // ── AUDIO (Web Audio API) ──
+  // Funktioniert auf Android unabhängig von der Lautstärke.
+  // Auf iOS: funktioniert wenn Musik läuft oder der Lautlosschalter nicht aktiv ist.
+  let audioCtx = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  // AudioContext beim ersten Touch entsperren (wichtig für iOS)
+  document.addEventListener('touchstart', () => getAudioCtx(), { once: true });
+  document.addEventListener('click', () => getAudioCtx(), { once: true });
+
+  function playBeep() {
+    try {
+      const ctx = getAudioCtx();
+      [0, 0.25, 0.5].forEach(offset => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime + offset);
+        gain.gain.setValueAtTime(0.9, ctx.currentTime + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.2);
+        osc.start(ctx.currentTime + offset);
+        osc.stop(ctx.currentTime + offset + 0.22);
+      });
+    } catch(e) { console.warn('Audio:', e); }
+  }
+
+  // ── TIMER ──
+  let timerInterval = null;
+  let timerRemaining = 0;
+
+  function startTimer() {
+    const input = document.getElementById('timer-input');
+    const secs = Math.max(1, Math.min(180, parseInt(input.value) || 60));
+    input.value = secs;
+    stopTimer(false);
+    timerRemaining = secs;
+    updateTimerDisplay();
+
+    const widget = document.getElementById('timer-widget');
+    const btn = document.getElementById('timer-start-btn');
+    widget.classList.remove('done');
+    widget.classList.add('running');
+    btn.textContent = '■ Stop';
+    btn.classList.add('stop-btn');
+    btn.onclick = () => stopTimer(true);
+
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      updateTimerDisplay();
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerDone();
+      }
+    }, 1000);
+  }
+
+  function stopTimer(manual) {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    const widget = document.getElementById('timer-widget');
+    widget.classList.remove('running', 'done');
+    document.getElementById('timer-display').textContent = '—';
+    resetTimerBtn();
+    if (manual) showToast('Timer gestoppt');
+  }
+
+  function timerDone() {
+    const widget = document.getElementById('timer-widget');
+    widget.classList.remove('running');
+    widget.classList.add('done');
+    document.getElementById('timer-display').textContent = '00';
+    playBeep();
+    showToast('⏱ Pause vorbei – nächster Satz!');
+    resetTimerBtn();
+    setTimeout(() => {
+      widget.classList.remove('done');
+      document.getElementById('timer-display').textContent = '—';
+    }, 4000);
+  }
+
+  function resetTimerBtn() {
+    const btn = document.getElementById('timer-start-btn');
+    btn.textContent = '▶ Start';
+    btn.classList.remove('stop-btn');
+    btn.onclick = startTimer;
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(timerRemaining / 60);
+    const s = timerRemaining % 60;
+    document.getElementById('timer-display').textContent =
+      timerRemaining >= 60 ? `${m}:${String(s).padStart(2,'0')}` : String(timerRemaining).padStart(2,'0');
+  }
+
+  // ── COUNTERS ──
   let counts = { pull: 0, push: 0 };
 
-  // Set today's date as default
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('save-date').value = today;
+  document.getElementById('save-date').value = new Date().toISOString().split('T')[0];
 
   function add(type, amount) {
     counts[type] += amount;
     const el = document.getElementById(type + '-total');
     el.textContent = counts[type];
     el.classList.remove('bump');
-    void el.offsetWidth; // reflow
+    void el.offsetWidth;
     el.classList.add('bump');
     setTimeout(() => el.classList.remove('bump'), 150);
   }
@@ -430,7 +627,7 @@
   function reset(type) {
     counts[type] = 0;
     document.getElementById(type + '-total').textContent = '0';
-    showToast(type === 'pull' ? 'Klimmzüge zurückgesetzt' : 'Liegestütze zurückgesetzt');
+    showToast(type === 'pull' ? 'Klimmzüge zurückgesetzt' : 'Liegestütze/Dips zurückgesetzt');
   }
 
   function saveWorkout() {
@@ -439,13 +636,10 @@
     if (counts.pull === 0 && counts.push === 0) { showToast('Noch nichts zu speichern!'); return; }
 
     const history = getHistory();
-
-    // Format date for display
     const [y, m, d] = date.split('-');
     const displayDate = `${d}.${m}.${y}`;
-
-    // Check if entry for this date exists → update
     const existing = history.findIndex(e => e.date === date);
+
     if (existing >= 0) {
       history[existing].pull += counts.pull;
       history[existing].push += counts.push;
@@ -456,8 +650,7 @@
     localStorage.setItem('workout_history', JSON.stringify(history));
     renderHistory();
     showToast(`✓ Gespeichert für ${displayDate}`);
-    counts.pull = 0;
-    counts.push = 0;
+    counts.pull = 0; counts.push = 0;
     document.getElementById('pull-total').textContent = '0';
     document.getElementById('push-total').textContent = '0';
   }
@@ -470,15 +663,12 @@
   function renderHistory() {
     const history = getHistory();
     const container = document.getElementById('history-list');
-    if (history.length === 0) {
+    if (!history.length) {
       container.innerHTML = '<p class="history-empty">Noch keine Einträge gespeichert.</p>';
       return;
     }
-
-    // Sort by date descending
     const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
-
-    container.innerHTML = sorted.map((e, i) => `
+    container.innerHTML = sorted.map(e => `
       <div class="history-entry">
         <span class="history-date">${e.displayDate}</span>
         <div class="history-stats">
@@ -488,17 +678,16 @@
           </div>
           <div class="history-stat">
             <span class="history-stat-val push">${e.push}</span>
-            <span class="history-stat-label">Liegestütze</span>
+            <span class="history-stat-label">Liegestütze/Dips</span>
           </div>
         </div>
-        <button class="history-delete" onclick="deleteEntry('${e.date}')" title="Eintrag löschen">✕</button>
+        <button class="history-delete" onclick="deleteEntry('${e.date}')" title="Löschen">✕</button>
       </div>
     `).join('');
   }
 
   function deleteEntry(date) {
-    const history = getHistory().filter(e => e.date !== date);
-    localStorage.setItem('workout_history', JSON.stringify(history));
+    localStorage.setItem('workout_history', JSON.stringify(getHistory().filter(e => e.date !== date)));
     renderHistory();
     showToast('Eintrag gelöscht');
   }
@@ -517,7 +706,6 @@
     setTimeout(() => t.classList.remove('show'), 2200);
   }
 
-  // Init
   renderHistory();
 </script>
 </body>
