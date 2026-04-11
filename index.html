@@ -528,15 +528,18 @@
     input[type=range] { width: 130px; accent-color: var(--accent); }
     /* ── SLIDER OVERLAY ── */
     #sliderOverlay {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(10,10,10,0.98);
-      border-top: 1px solid rgba(185,205,220,0.15);
+      position: fixed; left: 0; right: 0;
+      bottom: 0;
+      background: rgba(4,6,9,0.99);
+      border-top: 1px solid rgba(185,205,220,0.2);
+      border-bottom: none;
       padding: 14px 18px 18px;
-      z-index: 500;
+      z-index: 9999;
       display: none;
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      box-shadow: 0 -4px 30px rgba(0,0,0,0.6);
+      box-shadow: 0 -4px 30px rgba(0,0,0,0.8);
+      transition: bottom 0.05s;
     }
     #sliderOverlay.visible { display: block; }
     .slider-row {
@@ -1206,10 +1209,14 @@ function showSlider(ei, si, field, step, min, max, unit) {
   document.getElementById('sliderVal').firstChild.textContent = cur || '0';
   updateSliderTrack(cur, min, max);
   document.getElementById('sliderOverlay').classList.add('visible');
+  // Position above keyboard immediately
+  setTimeout(positionSliderAboveKeyboard, 50);
 }
 
 function hideSlider() {
-  document.getElementById('sliderOverlay').classList.remove('visible');
+  const overlay = document.getElementById('sliderOverlay');
+  overlay.classList.remove('visible');
+  overlay.style.bottom = '0px';
   activeSlider = null;
 }
 
@@ -1257,6 +1264,23 @@ document.addEventListener('touchstart', (e) => {
     hideSlider();
   }
 }, { passive: true });
+
+// ── KEYBOARD AVOIDANCE: keep slider above keyboard ──
+function positionSliderAboveKeyboard() {
+  const overlay = document.getElementById('sliderOverlay');
+  if (!overlay.classList.contains('visible')) return;
+  if (window.visualViewport) {
+    // visualViewport.height = visible area above keyboard
+    // window.innerHeight - visualViewport.height = keyboard height
+    const keyboardH = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    overlay.style.bottom = Math.max(0, keyboardH) + 'px';
+  }
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', positionSliderAboveKeyboard);
+  window.visualViewport.addEventListener('scroll', positionSliderAboveKeyboard);
+}
 
 function selectBW(ei, si, n) {
   const set = today.entries[ei].sets[si];
