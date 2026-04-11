@@ -1144,7 +1144,7 @@ function renderWorkout() {
           ${prev ? `<div class="ex-block-prev">Letztes Mal: ${prev}</div>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <button class="btn-edit-ex" title="Notiz bearbeiten" onclick="openEditExModal('${ex.id}',event)" style="font-size:7px;font-family:var(--dot-font);color:${ex.notes?'var(--accent)':'var(--text3)'}">${ex.notes ? '[NOTE]' : '[INFO]'}</button>
+          <button class="btn-edit-ex" title="Notiz bearbeiten" onclick="openEditExModal('${ex.id}',event)" style="font-size:7px;font-family:var(--dot-font);color:${ex.notes?'var(--accent)':'var(--text3)'}">${ex.notes ? '[NOTE]' : '[INFO/EDIT]'}</button>
           <button class="btn-remove-ex" onclick="removeEx(${ei})">
             <svg width="16" height="16" viewBox="0 0 10 12" fill="currentColor" shape-rendering="crispEdges">
               <rect x="0" y="2" width="10" height="1"/><rect x="3" y="0" width="4" height="2"/>
@@ -1451,7 +1451,7 @@ function renderExScreen() {
         <div class="ex-list-item-cat">${e.category}${e.increment ? ' · '+e.increment+' kg Schritte' : ''}${e.notes ? ' · 📌' : ''}</div>
       </div>
       <div class="ex-list-item-right">
-        <button class="btn-edit-ex" onclick="openEditExModal('${e.id}',event)" style="font-size:8px;font-family:var(--dot-font);color:var(--text3)">[EDI]</button>
+        <button class="btn-edit-ex" onclick="openEditExModal('${e.id}',event)" style="font-size:8px;font-family:var(--dot-font);color:var(--text3)">[EDIT]</button>
         ${e.custom ? `<button class="btn-del-ex" onclick="deleteExercise('${e.id}',event)"><svg width="14" height="14" viewBox="0 0 10 12" fill="currentColor" shape-rendering="crispEdges">
               <rect x="0" y="2" width="10" height="1"/><rect x="3" y="0" width="4" height="2"/>
               <rect x="1" y="3" width="1" height="8"/><rect x="8" y="3" width="1" height="8"/>
