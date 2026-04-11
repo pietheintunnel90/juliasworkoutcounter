@@ -279,9 +279,9 @@
     .stepper-input {
       background: rgba(185,205,220,0.05); border: 1px solid rgba(185,205,220,0.2);
       border-radius: 3px; color: var(--text);
-      font-size: 13px; font-weight: 400;
+      font-size: 9px; font-weight: 400;
       font-family: var(--dot-font);
-      text-align: center; padding: 4px 2px;
+      text-align: center; padding: 4px 1px;
       width: 0; flex: 1; min-width: 0;
       transition: border-color 0.15s;
     }
@@ -564,15 +564,15 @@
     }
     #sliderControl::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
-      width: 26px; height: 26px; border-radius: 50%;
+      width: 22px; height: 22px; border-radius: 2px;
       background: var(--accent);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      box-shadow: 0 0 0 2px rgba(185,205,220,0.15), 0 2px 8px rgba(0,0,0,0.8);
       cursor: pointer;
     }
     #sliderControl::-moz-range-thumb {
-      width: 26px; height: 26px; border-radius: 50%; border: none;
+      width: 22px; height: 22px; border-radius: 2px; border: none;
       background: var(--accent);
-      box-shadow: none;
+      box-shadow: 0 0 0 2px rgba(185,205,220,0.15);
     }
 
     /* ── CATEGORY PICKER ── */
@@ -1089,7 +1089,7 @@ function renderWorkout() {
           oncontextmenu="event.preventDefault();openDeleteSet(${ei},${si})"
           ontouchstart="startLongPress(${ei},${si},event)" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
           <div class="set-num">${si+1}</div>
-          <div class="set-val">${set.weight} kg</div>
+          <div class="set-val">${String(set.weight).replace(',','.')} kg</div>
           <div class="set-val">${set.reps}</div>
           <div class="set-checkmark">✓</div>
         </div>`;
@@ -1117,11 +1117,11 @@ function renderWorkout() {
         <div class="set-num">${si+1}</div>
         <div class="stepper">
           <button class="stepper-btn" onclick="stepSet(${ei},${si},'weight',-${inc})">−</button>
-          <input class="stepper-input" type="number" min="0" step="${inc}" inputmode="decimal"
+          <input class="stepper-input" type="text" inputmode="decimal" pattern="[0-9.]*"
             id="inp-${ei}-${si}-w"
-            placeholder="KG" value="${wVal}"
+            placeholder="KG" value="${wVal !== '' ? wVal : ''}"
             onfocus="showSlider(${ei},${si},'weight',0.5,0,220,'kg')"
-            oninput="updateSet(${ei},${si},'weight',this.value);syncSlider(${ei},${si},'weight',this.value)">
+            oninput="this.value=this.value.replace(',','.');updateSet(${ei},${si},'weight',this.value);syncSlider(${ei},${si},'weight',this.value)">
           <button class="stepper-btn" onclick="stepSet(${ei},${si},'weight',${inc})">+</button>
         </div>
         <div class="stepper">
@@ -1179,12 +1179,13 @@ function getPrevPerf(exerciseId) {
 }
 
 function updateSet(ei, si, field, val) {
-  today.entries[ei].sets[si][field] = field === 'reps' ? parseInt(val)||'' : parseFloat(val)||'';
+  const clean = String(val).replace(',', '.');
+  today.entries[ei].sets[si][field] = field === 'reps' ? parseInt(clean)||'' : (clean === '' ? '' : parseFloat(clean)||'');
 }
 
 function stepSet(ei, si, field, delta) {
   const set = today.entries[ei].sets[si];
-  const cur = parseFloat(set[field]) || 0;
+  const cur = parseFloat(String(set[field]).replace(',','.')) || 0;
   let next = Math.round((cur + delta) * 100) / 100;
   if (next < 0) next = 0;
   set[field] = field === 'reps' ? Math.round(next) : next;
