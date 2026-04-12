@@ -689,15 +689,20 @@
   </div>
   <div class="screen-content" id="workoutContent">
     <div class="empty-state" id="workoutEmpty">
-      <svg width="64" height="64" viewBox="0 0 16 10" fill="currentColor" shape-rendering="crispEdges" style="opacity:0.35">
-        <!-- Pixel dumbbell -->
+      <svg width="64" height="48" viewBox="0 0 16 10" fill="currentColor" shape-rendering="crispEdges" style="opacity:0.35">
         <rect x="0" y="3" width="3" height="4"/>
         <rect x="3" y="2" width="2" height="6"/>
         <rect x="5" y="4" width="6" height="2"/>
         <rect x="11" y="2" width="2" height="6"/>
         <rect x="13" y="3" width="3" height="4"/>
       </svg>
-      <p style="font-family:'Press Start 2P',monospace;font-size:11px;line-height:2.2;color:#fff;font-weight:400">KEINE UEBUNGEN<br><span style="font-size:9px;color:var(--text2)">TIPPE AUF +</span></p>
+      <p style="font-family:'Press Start 2P',monospace;font-size:11px;line-height:2.2;color:#fff">BEGINNE DEIN<br>WORKOUT</p>
+      <button onclick="copyLastWorkoutToday()" id="copyLastBtn"
+        style="margin-top:8px;background:rgba(185,205,220,0.07);border:1.5px solid rgba(185,205,220,0.3);
+        border-radius:3px;color:var(--accent);padding:12px 20px;font-size:8px;font-family:'Press Start 2P',monospace;
+        letter-spacing:1px;cursor:pointer;text-transform:uppercase;display:none">
+        ⎘ LETZTES WORKOUT<br>KOPIEREN
+      </button>
     </div>
     <div id="exerciseBlocks"></div>
   </div>
@@ -770,17 +775,52 @@
 </nav>
 
 <!-- ═══════════════ MODAL: EXERCISE PICKER ═══════════════ -->
+<!-- CSS for muscle group picker -->
+<style>
+  .cat-group-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px 16px;
+    border-bottom: 1px solid rgba(185,205,220,0.08);
+    cursor: pointer; transition: background 0.1s;
+    background: rgba(4,6,9,0.85);
+  }
+  .cat-group-item:active { background: rgba(185,205,220,0.08); }
+  .cat-group-icon {
+    width: 36px; height: 36px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(185,205,220,0.07);
+    border: 1px solid rgba(185,205,220,0.18); border-radius: 3px;
+  }
+  .cat-group-name {
+    font-family: var(--dot-font); font-size: 10px;
+    color: var(--text); letter-spacing: 0.5px;
+  }
+  .cat-group-count {
+    font-family: var(--dot-font); font-size: 7px;
+    color: var(--text3); margin-top: 5px;
+  }
+  .cat-group-arrow {
+    margin-left: auto; font-size: 9px;
+    color: var(--text3); font-family: var(--dot-font);
+  }
+  .picker-back-btn {
+    background: none; border: none; color: var(--accent);
+    font-family: var(--dot-font); font-size: 8px;
+    letter-spacing: 0.5px; cursor: pointer; padding: 0;
+  }
+</style>
+
 <div class="modal-overlay" id="modalPicker">
   <div class="modal">
-    <div class="modal-header">
-      <h2>Übung hinzufügen</h2>
-      <button class="btn-close" onclick="closeModal('modalPicker')">×</button>
+    <div class="modal-header" id="pickerHeader">
+      <h2 id="pickerTitle">UEBUNG HINZUFUEGEN</h2>
+      <button class="btn-close" onclick="closeModal('modalPicker')">X</button>
     </div>
-    <div class="search-wrap">
-      <input type="search" class="search-input" id="pickerSearch" placeholder="Suchen…" oninput="renderPickerList()">
+    <!-- Search (shown on exercise level) -->
+    <div class="search-wrap" id="pickerSearchWrap" style="display:none">
+      <input type="search" class="search-input" id="pickerSearch" placeholder="Suchen…" oninput="renderPickerExList()">
     </div>
-    <div class="cat-pills" id="pickerCats"></div>
-    <div class="ex-list" id="pickerList"></div>
+    <div class="ex-list" id="pickerBody"></div>
   </div>
 </div>
 
@@ -997,16 +1037,41 @@ function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 function getExercises() {
   let exs = load(KEYS.exercises);
   if (!exs) { exs = DEFAULT_EXERCISES; save(KEYS.exercises, exs); return exs; }
-  // Migrate: ensure all exercises have increment and notes fields
+
   let changed = false;
+
+  // 1. Migrate existing exercises: add missing fields
+  const existingIds = new Set(exs.map(e => e.id));
   exs = exs.map(e => {
     const d = DEFAULT_EXERCISES.find(d => d.id === e.id);
     let updated = {...e};
     if (updated.increment === undefined) { updated.increment = d?.increment ?? 2.5; changed = true; }
     if (updated.notes === undefined) { updated.notes = ''; changed = true; }
     if (updated.type === undefined && d?.type) { updated.type = d.type; changed = true; }
+    // Fix old Klimmzüge name + type
+    if (updated.id === 'r2bw' && updated.type !== 'bodyweight') { updated.type = 'bodyweight'; changed = true; }
     return updated;
   });
+
+  // 2. Add any DEFAULT_EXERCISES that are missing from localStorage
+  DEFAULT_EXERCISES.forEach(def => {
+    if (!existingIds.has(def.id)) {
+      exs.push({...def});
+      changed = true;
+    }
+  });
+
+  // 3. Sort by original DEFAULT order (custom exercises go to end)
+  const defaultOrder = DEFAULT_EXERCISES.map(e => e.id);
+  exs.sort((a, b) => {
+    const ai = defaultOrder.indexOf(a.id);
+    const bi = defaultOrder.indexOf(b.id);
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
   if (changed) save(KEYS.exercises, exs);
   return exs;
 }
@@ -1373,43 +1438,123 @@ function finishWorkout() {
 
   today = { date: todayStr(), entries: [] };
   renderWorkout();
+  updateCopyLastBtn();
   skipTimer();
-  toast('Training gespeichert 💪');
+  toast('TRAINING GESPEICHERT');
 }
 
 // ═══════════════════════════════════════════════
 // EXERCISE PICKER MODAL
 // ═══════════════════════════════════════════════
+const CAT_ICONS = {
+  'Brust': `<svg width="22" height="18" viewBox="0 0 12 9" fill="currentColor" shape-rendering="crispEdges">
+      <rect x="1" y="0" width="4" height="1"/><rect x="7" y="0" width="4" height="1"/>
+      <rect x="0" y="1" width="5" height="1"/><rect x="7" y="1" width="5" height="1"/>
+      <rect x="0" y="2" width="12" height="2"/><rect x="0" y="4" width="12" height="2"/>
+      <rect x="1" y="6" width="10" height="1"/><rect x="2" y="7" width="8" height="1"/>
+      <rect x="3" y="8" width="6" height="1"/>
+    </svg>`,
+  'Rücken': `<svg width="22" height="18" viewBox="0 0 10 12" fill="currentColor" shape-rendering="crispEdges">
+      <rect x="3" y="0" width="4" height="2"/>
+      <rect x="2" y="2" width="6" height="2"/>
+      <rect x="1" y="4" width="8" height="2"/>
+      <rect x="0" y="6" width="4" height="4"/><rect x="6" y="6" width="4" height="4"/>
+      <rect x="4" y="6" width="2" height="6"/>
+    </svg>`,
+  'Schultern': `<svg width="22" height="18" viewBox="0 0 14 8" fill="currentColor" shape-rendering="crispEdges">
+      <rect x="0" y="2" width="4" height="4"/>
+      <rect x="4" y="0" width="6" height="2"/><rect x="5" y="2" width="4" height="3"/>
+      <rect x="10" y="2" width="4" height="4"/>
+      <rect x="3" y="4" width="2" height="4"/><rect x="9" y="4" width="2" height="4"/>
+    </svg>`,
+  'Arme': `<svg width="22" height="18" viewBox="0 0 8 14" fill="currentColor" shape-rendering="crispEdges">
+      <rect x="2" y="0" width="4" height="2"/>
+      <rect x="1" y="2" width="6" height="4"/>
+      <rect x="0" y="6" width="8" height="2"/>
+      <rect x="1" y="8" width="6" height="4"/>
+      <rect x="2" y="12" width="4" height="2"/>
+    </svg>`,
+  'Beine': `<svg width="22" height="18" viewBox="0 0 10 14" fill="currentColor" shape-rendering="crispEdges">
+      <rect x="2" y="0" width="6" height="4"/>
+      <rect x="1" y="4" width="4" height="6"/><rect x="5" y="4" width="4" height="6"/>
+      <rect x="1" y="10" width="3" height="4"/><rect x="6" y="10" width="3" height="4"/>
+    </svg>`,
+  'Bauch': `<svg width="22" height="18" viewBox="0 0 10 12" fill="currentColor" shape-rendering="crispEdges">
+      <rect x="2" y="0" width="6" height="2"/>
+      <rect x="1" y="2" width="3" height="2"/><rect x="6" y="2" width="3" height="2"/>
+      <rect x="1" y="5" width="3" height="2"/><rect x="6" y="5" width="3" height="2"/>
+      <rect x="1" y="8" width="3" height="2"/><rect x="6" y="8" width="3" height="2"/>
+      <rect x="2" y="10" width="6" height="2"/>
+    </svg>`,
+  'Sonstiges': `<svg width="22" height="18" viewBox="0 0 10 10" fill="currentColor" shape-rendering="crispEdges">
+      <rect x="4" y="0" width="2" height="3"/>
+      <rect x="4" y="4" width="2" height="2"/>
+      <rect x="0" y="4" width="3" height="2"/>
+      <rect x="7" y="4" width="3" height="2"/>
+      <rect x="4" y="7" width="2" height="3"/>
+    </svg>`,
+};
+
+let pickerLevel = 'cats'; // 'cats' or 'exercises'
 let pickerCat = 'Alle';
 
 function openExPicker() {
-  document.getElementById('pickerSearch').value = '';
+  pickerLevel = 'cats';
   pickerCat = 'Alle';
   renderPickerCats();
-  renderPickerList();
   openModal('modalPicker');
 }
 
 function renderPickerCats() {
-  document.getElementById('pickerCats').innerHTML =
-    CATEGORIES.map(c => `<button class="pill ${c===pickerCat?'active':''}" onclick="setPickerCat('${c}')">${c}</button>`).join('');
+  pickerLevel = 'cats';
+  document.getElementById('pickerTitle').textContent = 'UEBUNG HINZUFUEGEN';
+  document.getElementById('pickerHeader').querySelector('h2').style.cursor = 'default';
+  document.getElementById('pickerSearchWrap').style.display = 'none';
+
+  const exs = getExercises();
+  const cats = CATEGORIES.filter(c => c !== 'Alle');
+  const body = document.getElementById('pickerBody');
+  body.innerHTML = cats.map(cat => {
+    const count = exs.filter(e => e.category === cat).length;
+    const icon = CAT_ICONS[cat] || '';
+    return `<div class="cat-group-item" onclick="openPickerCat('${cat}')">
+      <div class="cat-group-icon">${icon}</div>
+      <div>
+        <div class="cat-group-name">${cat.toUpperCase()}</div>
+        <div class="cat-group-count">${count} UEBUNGEN</div>
+      </div>
+      <div class="cat-group-arrow">&gt;</div>
+    </div>`;
+  }).join('');
 }
 
-function setPickerCat(c) { pickerCat = c; renderPickerCats(); renderPickerList(); }
+function openPickerCat(cat) {
+  pickerLevel = 'exercises';
+  pickerCat = cat;
+  document.getElementById('pickerTitle').textContent = cat.toUpperCase();
+  document.getElementById('pickerSearchWrap').style.display = 'block';
+  const searchEl = document.getElementById('pickerSearch');
+  if (searchEl) searchEl.value = '';
+  renderPickerExList();
+}
 
-function renderPickerList() {
-  const q = document.getElementById('pickerSearch').value.toLowerCase();
+function renderPickerExList() {
+  const q = (document.getElementById('pickerSearch').value || '').toLowerCase();
   const exs = getExercises().filter(e =>
-    (pickerCat==='Alle' || e.category===pickerCat) && e.name.toLowerCase().includes(q)
+    e.category === pickerCat && e.name.toLowerCase().includes(q)
   );
-  document.getElementById('pickerList').innerHTML = exs.length
-    ? exs.map(e => `<div class="ex-list-item" onclick="addExToWorkout('${e.id}')">
-        <div><div class="ex-list-item-name">${e.name}</div>
-        <div class="ex-list-item-cat">${e.category}</div></div>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text3)">
-          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg></div>`).join('')
-    : '<div style="padding:24px;text-align:center;color:var(--text3)">Keine Übungen gefunden</div>';
+  document.getElementById('pickerBody').innerHTML = exs.length
+    ? `<div class="cat-group-item" onclick="renderPickerCats()" style="border-bottom:2px solid rgba(185,205,220,0.1)">
+        <div style="font-family:var(--dot-font);font-size:8px;color:var(--text3)">&lt; ZURUECK</div>
+      </div>` +
+      exs.map(e => `<div class="ex-list-item" onclick="addExToWorkout('${e.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="ex-list-item-name">${e.name}</div>
+          ${e.notes ? `<div class="ex-list-item-cat">[NOTE]</div>` : ''}
+        </div>
+        <div style="font-family:var(--dot-font);font-size:10px;color:var(--text3);padding-left:8px">+</div>
+      </div>`).join('')
+    : '<div style="padding:24px;text-align:center;color:var(--text3);font-family:var(--dot-font);font-size:8px">KEINE UEBUNGEN</div>';
 }
 
 function addExToWorkout(id) {
@@ -1625,6 +1770,32 @@ function toggleHistDetail(wi) {
   const chev = document.getElementById('hchev-'+wi);
   det.classList.toggle('open');
   chev.classList.toggle('open');
+}
+
+function updateCopyLastBtn() {
+  const workouts = getWorkouts();
+  const btn = document.getElementById('copyLastBtn');
+  if (!btn) return;
+  // Show button only if: no current entries AND history exists
+  const past = workouts.filter(w => w.date !== todayStr());
+  btn.style.display = (today.entries.length === 0 && past.length > 0) ? 'block' : 'none';
+}
+
+function copyLastWorkoutToday() {
+  const workouts = getWorkouts();
+  const past = workouts.filter(w => w.date !== todayStr());
+  if (!past.length) return;
+  const last = past[past.length - 1];
+
+  today = {
+    date: todayStr(),
+    entries: last.entries.map(entry => ({
+      exerciseId: entry.exerciseId,
+      sets: entry.sets.map(s => ({ weight: s.weight, reps: s.reps, saved: false }))
+    }))
+  };
+  renderWorkout();
+  toast('LETZTES WORKOUT GELADEN 💪');
 }
 
 function copyWorkout(workoutId, evt) {
@@ -1857,6 +2028,9 @@ function showMotivationIfNeeded() {
   getExercises();
 
   renderWorkout();
+
+  // Show copy last workout button if history exists
+  updateCopyLastBtn();
 
   // Show daily motivation
   setTimeout(showMotivationIfNeeded, 400);
