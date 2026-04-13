@@ -1075,7 +1075,7 @@ function saveExercises(e) { save(KEYS.exercises, e); }
 function getWorkouts() { return load(KEYS.workouts) || []; }
 function saveWorkouts(w) { save(KEYS.workouts, w); }
 
-function getSettings() { return load(KEYS.settings) || {timerDuration:90, autoTimer:true}; }
+function getSettings() { return load(KEYS.settings) || {timerDuration:90, autoTimer:false}; }
 function saveSettings(s) { save(KEYS.settings, s); }
 
 // ═══════════════════════════════════════════════
@@ -1965,7 +1965,22 @@ function updatePresetHighlight() {
 function startTimerFromModal() {
   try { getACtx().resume(); } catch {}
   loadFightSound();
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
   startTimer(timerModalSecs);
+}
+
+function toggleAutoTimer() {
+  const s = getSettings();
+  s.autoTimer = !s.autoTimer;
+  saveSettings(s);
+  const tog = document.getElementById('autoTimerToggle');
+  if (tog) {
+    tog.textContent = s.autoTimer ? 'AN' : 'AUS';
+    tog.style.color = s.autoTimer ? 'var(--accent)' : 'var(--text3)';
+    tog.style.borderColor = s.autoTimer ? 'rgba(185,205,220,0.5)' : 'rgba(185,205,220,0.2)';
+  }
 }
 
 // ═══════════════════════════════════════════════
